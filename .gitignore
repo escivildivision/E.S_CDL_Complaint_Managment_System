@@ -1,0 +1,19 @@
+# Node dependencies
+node_modules/
+**/node_modules/
+
+# Secrets & Credentials
+credentials.json
+**/credentials.json
+.env
+**/.env
+
+# Lock files
+package-lock.json
+**/package-lock.json
+
+# Build outputs & cache
+dist/
+**/dist/
+.DS_Store
+*.log
