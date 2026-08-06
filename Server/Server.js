@@ -4,9 +4,12 @@ const cors = require("cors");
 const app = express();
 const ConnectGoogleSheets = require("./config/googleSheets");
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
 const categoryRoutes = require("./routes/categoryroutes");
 const priorityRoutes = require("./routes/priorityroutes");
 const complaintRoutes = require("./routes/complaintroutes");
