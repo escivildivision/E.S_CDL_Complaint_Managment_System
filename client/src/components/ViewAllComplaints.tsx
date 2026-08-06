@@ -40,6 +40,7 @@ export default function ViewAllComplaints({
     const [dateFilter, setDateFilter] = useState("All");
     const [selectedCategory, setSelectedCategory] = useState("All Categories");
     const [selectedPriority, setSelectedPriority] = useState("All Priorities");
+    const [selectedStatus, setSelectedStatus] = useState("All Statuses");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
@@ -49,12 +50,14 @@ export default function ViewAllComplaints({
     // Get unique categories and priorities dynamically from complaints data
     const categories = Array.from(new Set(complaints.map((c) => c.category).filter(Boolean)));
     const priorities = Array.from(new Set(complaints.map((c) => c.priority).filter(Boolean)));
+    const statuses = Array.from(new Set(complaints.map((c) => c.remarks).filter(Boolean)));
 
     const handleClear = () => {
         setSearchQuery("");
         setDateFilter("All");
         setSelectedCategory("All Categories");
         setSelectedPriority("All Priorities");
+        setSelectedStatus("All Statuses");
         setStartDate("");
         setEndDate("");
     };
@@ -82,6 +85,14 @@ export default function ViewAllComplaints({
         if (
             selectedPriority !== "All Priorities" &&
             c.priority?.toLowerCase() !== selectedPriority.toLowerCase()
+        ) {
+            return false;
+        }
+
+        // Status Filter
+        if (
+            selectedStatus !== "All Statuses" &&
+            c.remarks?.toLowerCase() !== selectedStatus.toLowerCase()
         ) {
             return false;
         }
@@ -129,6 +140,7 @@ export default function ViewAllComplaints({
         if (searchQuery) params.append("search", searchQuery);
         if (selectedCategory !== "All Categories") params.append("category", selectedCategory);
         if (selectedPriority !== "All Priorities") params.append("priority", selectedPriority);
+        if (selectedStatus !== "All Statuses") params.append("status", selectedStatus);
         if (dateFilter !== "All") params.append("dateFilter", dateFilter);
         if (startDate) params.append("startDate", startDate);
         if (endDate) params.append("endDate", endDate);
@@ -225,7 +237,7 @@ export default function ViewAllComplaints({
                     </div>
 
                     {/* Second Row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
 
                         <select
                             value={dateFilter}
@@ -257,6 +269,17 @@ export default function ViewAllComplaints({
                             <option value="All Priorities">All Priorities</option>
                             {priorities.map((p) => (
                                 <option key={p} value={p}>{p}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={selectedStatus}
+                            onChange={(e) => setSelectedStatus(e.target.value)}
+                            className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 outline-none focus:border-blue-500"
+                        >
+                            <option value="All Statuses">All Statuses</option>
+                            {statuses.map((s) => (
+                                <option key={s} value={s}>{s}</option>
                             ))}
                         </select>
 

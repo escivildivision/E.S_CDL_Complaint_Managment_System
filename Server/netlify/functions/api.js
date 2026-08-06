@@ -34,7 +34,9 @@ module.exports.handler = async (event, context) => {
             const ConnectGoogleSheets = require("../../config/googleSheets");
             const app = require("../../Server");
             await ConnectGoogleSheets();
-            handler = serverless(app);
+            handler = serverless(app, {
+                binary: ['application/pdf', '*/*']
+            });
         }
         return await handler(event, context);
     } catch (error) {

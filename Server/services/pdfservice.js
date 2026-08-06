@@ -1,17 +1,16 @@
-const PdfPrinter = require("pdfmake");
 const fs = require("fs");
 const path = require("path");
+const PdfMake = require("pdfmake");
+const vfsFonts = require("pdfmake/build/vfs_fonts");
 
-const fonts = {
-    Helvetica: {
-        normal: "Helvetica",
-        bold: "Helvetica-Bold",
-        italics: "Helvetica-Oblique",
-        bolditalics: "Helvetica-BoldOblique",
+const printer = new PdfMake({
+    Roboto: {
+        normal: Buffer.from(vfsFonts["Roboto-Regular.ttf"], "base64"),
+        bold: Buffer.from(vfsFonts["Roboto-Medium.ttf"], "base64"),
+        italics: Buffer.from(vfsFonts["Roboto-Italic.ttf"], "base64"),
+        bolditalics: Buffer.from(vfsFonts["Roboto-MediumItalic.ttf"], "base64"),
     },
-};
-
-const printer = new PdfPrinter(fonts);
+});
 
 const getLogoBase64 = () => {
     // Check if logo exists in Server/assets/logo.png or Server/logo.png
@@ -111,7 +110,7 @@ const generateComplaintPDF = (complaints) => {
 
     const docDefinition = {
         defaultStyle: {
-            font: "Helvetica",
+            font: "Roboto",
             fontSize: 8,
         },
         pageSize: "A4",

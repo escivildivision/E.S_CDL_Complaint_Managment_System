@@ -5,11 +5,12 @@ const downloadComplaintReport = async (req, res) => {
     try {
         const complaints = await GetAllComplaint();
 
-        const { category, priority, dateFilter, startDate, endDate } = req.query;
+        const { category, priority, status, dateFilter, startDate, endDate } = req.query;
 
         const filteredComplaints = complaints.filter((c) => {
             if (category && category !== "All Categories" && c.category !== category) return false;
             if (priority && priority !== "All Priorities" && c.priority?.toLowerCase() !== priority.toLowerCase()) return false;
+            if (status && status !== "All Statuses" && c.remarks?.toLowerCase() !== status.toLowerCase()) return false;
 
             if (dateFilter && dateFilter !== "All" && c.date) {
                 const itemDate = new Date(c.date);
@@ -43,13 +44,20 @@ const downloadComplaintReport = async (req, res) => {
 
         const pdfDoc = generateComplaintPDF(filteredComplaints);
 
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader(
-            "Content-Disposition",
-            'attachment; filename="Complaint_Report.pdf"'
-        );
-
-        pdfDoc.pipe(res);
+        // Buffer full PDF in memory before sending to avoid streaming race conditions
+        const chunks = [];
+        pdfDoc.on("data", (chunk) => chunks.push(chunk));
+        pdfDoc.on("end", () => {
+            const pdfBuffer = Buffer.concat(chunks);
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", 'attachment; filename="Complaint_Report.pdf"');
+            res.setHeader("Content-Length", pdfBuffer.length);
+            res.end(pdfBuffer);
+        });
+        pdfDoc.on("error", (err) => {
+            console.error("PDF stream error:", err);
+            res.status(500).json({ success: false, message: "PDF generation failed" });
+        });
         pdfDoc.end();
 
     } catch (error) {
