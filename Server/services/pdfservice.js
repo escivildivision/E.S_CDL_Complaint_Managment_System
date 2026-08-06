@@ -13,11 +13,10 @@ const printer = new PdfMake({
 });
 
 const getLogoBase64 = () => {
-    // Check if logo exists in Server/assets/logo.png or Server/logo.png
+    // Check if logo exists using the correct casing
     const possiblePaths = [
-        path.join(__dirname, "../assets/logoPAA.png"),
-        path.join(__dirname, "../logoPAA.png"),
-        path.join(__dirname, "../../client/src/assets/hero.png"),
+        path.join(__dirname, "../assets/LogoPAA.png"),
+        path.join(__dirname, "../../client/src/assets/LogoPAA.png"),
     ];
 
     for (const imgPath of possiblePaths) {
