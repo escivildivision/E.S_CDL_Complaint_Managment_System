@@ -7,9 +7,15 @@ const ConnectGoogleSheets = async () => {
     const { GoogleSpreadsheet } = await import("google-spreadsheet");
     const { JWT } = await import("google-auth-library");
 
+    // Clean private key: remove surrounding quotes, fix escaped newlines
+    const rawKey = process.env.GOOGLE_PRIVATE_KEY || "";
+    const privateKey = rawKey
+        .replace(/^["']|["']$/g, "")   // strip surrounding quotes if present
+        .replace(/\\n/g, "\n");         // convert literal \n to real newlines
+
     const serviceAccountAuth = new JWT({
         email: process.env.GOOGLE_CLIENT_EMAIL,
-        key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        key: privateKey,
         scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
 
