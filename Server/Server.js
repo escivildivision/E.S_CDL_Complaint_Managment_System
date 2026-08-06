@@ -34,15 +34,18 @@ app.use((req, res) => {
 
 const port = process.env.PORT || 5000;
 
-const StartServer = async () => {
-    try {
-        await ConnectGoogleSheets();
-        app.listen(port, () => {
-            console.log(`Server is running on port ${port}`);
-        });
-    } catch (error) {
-        console.log(error);
-    }
+if (require.main === module) {
+    const StartServer = async () => {
+        try {
+            await ConnectGoogleSheets();
+            app.listen(port, () => {
+                console.log(`Server is running on port ${port}`);
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+    StartServer();
 }
 
-StartServer();
+module.exports = app;
