@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { Complaint } from "../types";
 import { toast } from "react-toastify";
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
 interface ViewAllComplaintsProps {
     complaints: Complaint[];
     onBack: () => void;
@@ -131,8 +133,8 @@ export default function ViewAllComplaints({
         if (startDate) params.append("startDate", startDate);
         if (endDate) params.append("endDate", endDate);
 
-        // Opens: http://localhost:5000/api/reports/download-complaints?category=Electrical&priority=high...
-        window.open(`http://localhost:5000/api/reports/download-complaints?${params.toString()}`, "_blank");
+        // Opens backend PDF report endpoint
+        window.open(`${API_URL}/reports/download-complaints?${params.toString()}`, "_blank");
     };
 
 
@@ -154,7 +156,7 @@ export default function ViewAllComplaints({
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/complaints/delete-complaint/${complaintNo}`,
+                `${API_URL}/complaints/delete-complaint/${complaintNo}`,
                 {
                     method: "DELETE",
                 }
