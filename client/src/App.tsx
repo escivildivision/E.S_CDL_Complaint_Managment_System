@@ -11,6 +11,7 @@ type View = "dashboard" | "complaints" | "addComplaint" | "updateComplaint";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
+console.log(API_URL)
 function App() {
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [selectedComplaintNo, setSelectedComplaintNo] = useState<string>("");
