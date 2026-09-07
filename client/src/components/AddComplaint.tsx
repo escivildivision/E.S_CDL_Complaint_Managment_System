@@ -193,7 +193,7 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                                 <option value="Painter">Painter</option>
                                 <option value="Welder">Welder</option>
                                 <option value="Plumber">Plumber</option>
-                                <option value="Electrician">Electrician</option>
+                                <option value="Sewerman">Sewerman</option>
                                 <option value="Carpenter">Carpenter</option>
                                 <option value="Mason">Mason</option>
                                 <option value="Helper">Helper</option>
