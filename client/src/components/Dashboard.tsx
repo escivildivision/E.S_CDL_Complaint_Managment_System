@@ -24,6 +24,16 @@ const statusColor = (remarks: string) => {
 };
 
 export default function Dashboard({ complaints, onViewAll, onAddComplaint }: DashboardProps) {
+    const sortedComplaints = [...complaints].sort((a, b) => {
+        const numberA = Number.parseInt(a.complaintNo || "", 10);
+        const numberB = Number.parseInt(b.complaintNo || "", 10);
+
+        if (!Number.isNaN(numberA) && !Number.isNaN(numberB)) {
+            return numberB - numberA;
+        }
+
+        return String(b.complaintNo || "").localeCompare(String(a.complaintNo || ""));
+    });
     const totalComplaints = complaints.length;
     const completedCount = complaints.filter(
         (c) => c.remarks?.toLowerCase().includes("completed") || c.remarks?.toLowerCase().includes("done")
@@ -149,8 +159,8 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">🕐 Latest Complaints</h3>
                     <div className="flex flex-col gap-4">
-                        {complaints.slice(0, 4).map((c) => (
-                            <div key={c.complaintNo} className="flex items-start gap-3">
+                        {sortedComplaints.slice(0, 4).map((c, index) => (
+                            <div key={`${c.complaintNo}-${index}`} className="flex items-start gap-3">
                                 <div className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${c.remarks?.toLowerCase().includes("completed") ? "bg-green-500" : "bg-orange-500"}`}></div>
                                 <div>
                                     <p className="text-xs font-medium text-gray-700">{c.complaintNo} — {c.category}</p>
@@ -187,8 +197,8 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
                             </tr>
                         </thead>
                         <tbody>
-                            {complaints.slice(0, 5).map((item) => (
-                                <tr key={item.complaintNo} className="hover:bg-gray-50/60">
+                            {sortedComplaints.slice(0, 5).map((item, index) => (
+                                <tr key={`${item.complaintNo}-${index}`} className="hover:bg-gray-50/60">
                                     <td className="px-4 py-3.5 text-sm font-semibold text-blue-500 border-b border-gray-100">{item.complaintNo}</td>
                                     <td className="px-4 py-3.5 text-sm font-semibold text-gray-900 border-b border-gray-100">{item.complainedPerson}</td>
                                     <td className="px-4 py-3.5 text-sm text-gray-600 border-b border-gray-100">{item.category}</td>

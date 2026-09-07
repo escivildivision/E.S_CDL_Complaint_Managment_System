@@ -4,6 +4,7 @@ const {
     UpdateComplaint,
     GetSpecificComplaint,
     DelComplaint,
+    getNextComplaintNo,
 } = require("../services/googleSheetservice");
 
 const addComplaint = async (req, res) => {
@@ -17,7 +18,6 @@ const addComplaint = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
-
         res.status(500).json({
             success: false,
             message: "Failed to add complaint",
@@ -103,10 +103,27 @@ const DeleteComplaint = async (req, res) => {
     }
 };
 
+const nextComplaintNo = async (req, res) => {
+    try {
+        const complaintNo = await getNextComplaintNo();
+        res.status(200).json({
+            success: true,
+            data: { complaintNo },
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to get next complaint number",
+        });
+    }
+};
+
 module.exports = {
     addComplaint,
     getAllComplaints,
     updateComplaint,
     getSpecificComplaint,
     DeleteComplaint,
+    nextComplaintNo,
 };

@@ -320,14 +320,17 @@ export default function UpdateComplaint({
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
                             <div>
                                 <label className={labelClass}>Status / Remarks</label>
-                                <input
-                                    type="text"
+                                <select
                                     name="remarks"
                                     value={form.remarks}
                                     onChange={handleFormChange}
-                                    placeholder="e.g. Completed"
                                     className={inputClass}
-                                />
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="In-progress">In Progress</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
                             </div>
                             <div>
                                 <label className={labelClass}>Completion Date</label>

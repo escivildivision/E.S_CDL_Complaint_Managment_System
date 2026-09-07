@@ -18,7 +18,6 @@ interface AddComplaintProps {
 }
 
 const emptyForm = {
-    complaintNo: "",
     date: new Date().toISOString().split("T")[0],
     location: "",
     category: "",
@@ -40,10 +39,28 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
     const [priorities, setPriorities] = useState<PriorityItem[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [submitMsg, setSubmitMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const [complaintNo, setComplaintNo] = useState<string>("...");
 
     useEffect(() => {
         fetchDropdowns();
+        fetchNextComplaintNo();
     }, []);
+
+    const fetchNextComplaintNo = async () => {
+        try {
+            const res = await fetch(`${API_URL}/complaints/next-complaint-no`);
+            const json = await res.json();
+            if (res.ok && json.success && json.data?.complaintNo) {
+                setComplaintNo(json.data.complaintNo);
+            } else {
+                setComplaintNo("Unavailable");
+                console.error("Failed to fetch next complaint no:", json.message);
+            }
+        } catch (err) {
+            setComplaintNo("Unavailable");
+            console.error("Failed to fetch next complaint no:", err);
+        }
+    };
 
     const fetchDropdowns = async () => {
         try {
@@ -78,8 +95,10 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
             });
             const json = await res.json();
             if (json.success) {
-                setSubmitMsg({ type: "success", text: "Complaint added successfully!" });
+                const assignedNo = json.data?.complaintNo || "";
+                setSubmitMsg({ type: "success", text: `Complaint No: ${assignedNo} added successfully!` });
                 setForm({ ...emptyForm, date: new Date().toISOString().split("T")[0] });
+                fetchNextComplaintNo();
                 onComplaintAdded();
             } else {
                 setSubmitMsg({ type: "error", text: json.message || "Failed to add complaint." });
@@ -127,8 +146,14 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         <div>
-                            <label className={labelClass}>Complaint No *</label>
-                            <input type="text" name="complaintNo" value={form.complaintNo} onChange={handleFormChange} required placeholder="e.g. CMP-002" className={inputClass} />
+                            <label className={labelClass}>Complaint No (Auto)</label>
+                            <input
+                                type="text"
+                                value={complaintNo}
+                                readOnly
+                                disabled
+                                className={`${inputClass} bg-blue-50 text-blue-700 font-bold border-blue-300 cursor-not-allowed`}
+                            />
                         </div>
                         <div>
                             <label className={labelClass}>Date *</label>
@@ -216,7 +241,12 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
                         <div>
                             <label className={labelClass}>Status</label>
-                            <input type="text" name="remarks" value={form.remarks} onChange={handleFormChange} placeholder="e.g. Completed" className={inputClass} />
+                            <select name="remarks" value={form.remarks} onChange={handleFormChange} className={inputClass}>
+                                <option value="">Select Status</option>
+                                <option value="Completed">Completed</option>
+                                <option value="In-progress">In Progress</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
                         </div>
                         <div>
                             <label className={labelClass}>Material Consumed</label>
