@@ -1,5 +1,29 @@
 const connectGoogleSheet = require("../config/googleSheets");
 
+const isSpreadsheetErrorValue = (value) => {
+    if (value === null || value === undefined) return true;
+    const text = String(value).trim();
+    return !text || /^#.*!$/.test(text);
+};
+
+const sanitizeComplaintNumber = (value, fallback = "") => {
+    if (isSpreadsheetErrorValue(value)) {
+        return fallback;
+    }
+
+    return String(value).trim();
+};
+
+const getNumericComplaintNumber = (value) => {
+    const cleaned = sanitizeComplaintNumber(value);
+    if (!cleaned) {
+        return Number.NaN;
+    }
+
+    const parsed = Number.parseInt(cleaned, 10);
+    return Number.isNaN(parsed) ? Number.NaN : parsed;
+};
+
 const getComplaintNumberHeader = (sheet) => {
     const header = sheet.headerValues.find((value) =>
         ["complaint no", "complaint number"].includes(
@@ -52,11 +76,11 @@ const createComplaint = async (data) => {
     await sheet.loadHeaderRow();
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
 
-    // Auto-generate complaint number (max existing number + 1)
+    // Auto-generate complaint number (max existing number + 1), ignoring corrupted spreadsheet values such as #REF!
     const rows = await sheet.getRows();
     const existingNumbers = rows
-        .map((row) => parseInt(row.get(complaintNumberHeader), 10))
-        .filter((n) => !isNaN(n) && n < 10000);
+        .map((row) => getNumericComplaintNumber(row.get(complaintNumberHeader)))
+        .filter((n) => !Number.isNaN(n) && n < 10000);
 
     const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
     const complaintNo = String(maxNumber + 1);
@@ -96,27 +120,30 @@ const GetAllComplaint = async () => {
     const rows = await sheet.getRows();
 
     return rows
-        .map((row) => ({
-            complaintNo: row.get(complaintNumberHeader),
-            date: row.get("Date"),
-            location: row.get("Location"),
-            category: row.get("Category"),
-            complainedPerson: row.get("Complained Person"),
-            complaintDetails: row.get("Complaint Details"),
-            timeNote: row.get("Time Note"),
-            timeDone: row.get("Time Done"),
-            attendedBy: row.get("Attended By"),
-            numberOfWorkers: row.get("Number of Workers"),
-            completionDate: row.get("Completion Date"),
-            supervisor: row.get("Supervisor"),
-            priority: row.get("Priority"),
-            remarks: row.get("Remarks"),
-            materialConsumed: row.get("Material Consumed"),
-        }))
+        .map((row) => {
+            const complaintNoValue = sanitizeComplaintNumber(row.get(complaintNumberHeader), "");
+            return {
+                complaintNo: complaintNoValue,
+                date: row.get("Date"),
+                location: row.get("Location"),
+                category: row.get("Category"),
+                complainedPerson: row.get("Complained Person"),
+                complaintDetails: row.get("Complaint Details"),
+                timeNote: row.get("Time Note"),
+                timeDone: row.get("Time Done"),
+                attendedBy: row.get("Attended By"),
+                numberOfWorkers: row.get("Number of Workers"),
+                completionDate: row.get("Completion Date"),
+                supervisor: row.get("Supervisor"),
+                priority: row.get("Priority"),
+                remarks: row.get("Remarks"),
+                materialConsumed: row.get("Material Consumed"),
+            };
+        })
         .sort((a, b) => {
-            const numA = parseInt(a.complaintNo || "0", 10);
-            const numB = parseInt(b.complaintNo || "0", 10);
-            if (!isNaN(numA) && !isNaN(numB)) {
+            const numA = getNumericComplaintNumber(a.complaintNo);
+            const numB = getNumericComplaintNumber(b.complaintNo);
+            if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
                 return numB - numA;
             }
             return (b.complaintNo || "").localeCompare(a.complaintNo || "");
@@ -131,8 +158,9 @@ const UpdateComplaint = async (complaintNo, data) => {
 
     const rows = await sheet.getRows();
 
+    const targetComplaintNo = sanitizeComplaintNumber(complaintNo, "");
     const row = rows.find(
-        (row) => row.get(complaintNumberHeader)?.toString().trim() === complaintNo?.toString().trim()
+        (row) => sanitizeComplaintNumber(row.get(complaintNumberHeader), "") === targetComplaintNo
     );
 
     if (!row) {
@@ -165,6 +193,9 @@ const UpdateComplaint = async (complaintNo, data) => {
         }
     }
 
+    const currentComplaintNo = sanitizeComplaintNumber(row.get(complaintNumberHeader), targetComplaintNo || "");
+    row.set(complaintNumberHeader, currentComplaintNo || targetComplaintNo || "");
+
     await row.save();
 
     return row.toObject();
@@ -179,15 +210,27 @@ const GetSpecificComplaint = async (complaintNo) => {
 
     const rows = await sheet.getRows();
 
+    const targetComplaintNo = sanitizeComplaintNumber(complaintNo, "");
     const row = rows.find(
-        (row) => row.get(complaintNumberHeader)?.toString().trim() === complaintNo?.toString().trim()
+        (row) => sanitizeComplaintNumber(row.get(complaintNumberHeader), "") === targetComplaintNo
     );
 
     if (!row) {
         throw new Error("Complaint not found");
     }
 
-    return row.toObject();
+    const cleanedRow = row.toObject();
+    const cleanComplaintNo = sanitizeComplaintNumber(cleanedRow[complaintNumberHeader], targetComplaintNo || "");
+    if (cleanComplaintNo && cleanComplaintNo !== cleanedRow[complaintNumberHeader]) {
+        row.set(complaintNumberHeader, cleanComplaintNo);
+        await row.save();
+    }
+
+    return {
+        ...cleanedRow,
+        [complaintNumberHeader]: cleanComplaintNo,
+        complaintNo: cleanComplaintNo,
+    };
 };
 
 const DelComplaint = async (complaintNo) => {
@@ -199,8 +242,9 @@ const DelComplaint = async (complaintNo) => {
 
     const rows = await sheet.getRows();
 
+    const targetComplaintNo = sanitizeComplaintNumber(complaintNo, "");
     const row = rows.find(
-        (row) => row.get(complaintNumberHeader)?.toString().trim() === complaintNo?.toString().trim()
+        (row) => sanitizeComplaintNumber(row.get(complaintNumberHeader), "") === targetComplaintNo
     );
 
     if (!row) {
@@ -210,10 +254,11 @@ const DelComplaint = async (complaintNo) => {
     const deletedData = row.toObject();
     await row.delete();
 
-    // Renumber remaining complaints to fill gaps
     const remainingRows = await sheet.getRows();
     for (let i = 0; i < remainingRows.length; i++) {
-        remainingRows[i].set(complaintNumberHeader, i + 1);
+        const nextComplaintNumber = String(i + 1);
+        const currentValue = sanitizeComplaintNumber(remainingRows[i].get(complaintNumberHeader), nextComplaintNumber);
+        remainingRows[i].set(complaintNumberHeader, currentValue || nextComplaintNumber);
         await remainingRows[i].save();
     }
 
@@ -227,8 +272,8 @@ const getNextComplaintNo = async () => {
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
     const rows = await sheet.getRows();
     const existingNumbers = rows
-        .map((row) => parseInt(row.get(complaintNumberHeader), 10))
-        .filter((n) => !isNaN(n) && n < 10000);
+        .map((row) => getNumericComplaintNumber(row.get(complaintNumberHeader)))
+        .filter((n) => !Number.isNaN(n) && n < 10000);
 
     const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
     return String(maxNumber + 1);
@@ -243,4 +288,6 @@ module.exports = {
     GetSpecificComplaint,
     DelComplaint,
     getNextComplaintNo,
+    sanitizeComplaintNumber,
+    getNumericComplaintNumber,
 };
