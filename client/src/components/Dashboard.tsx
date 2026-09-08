@@ -14,11 +14,11 @@ const priorityStyles: Record<string, string> = {
     low: "bg-blue-50 text-blue-600",
 };
 
-const statusColor = (remarks: string) => {
-    const r = remarks?.toLowerCase() || "";
-    if (r.includes("completed") || r.includes("done") || r.includes("resolved"))
+const statusColor = (status?: string, remarks?: string) => {
+    const s = (status || remarks || "").toLowerCase();
+    if (s.includes("completed") || s.includes("done") || s.includes("resolved"))
         return "bg-green-50 text-green-700";
-    if (r.includes("progress") || r.includes("working"))
+    if (s.includes("progress") || s.includes("working"))
         return "bg-blue-50 text-blue-700";
     return "bg-orange-50 text-orange-700";
 };
@@ -35,9 +35,10 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
         return String(b.complaintNo || "").localeCompare(String(a.complaintNo || ""));
     });
     const totalComplaints = complaints.length;
-    const completedCount = complaints.filter(
-        (c) => c.remarks?.toLowerCase().includes("completed") || c.remarks?.toLowerCase().includes("done")
-    ).length;
+    const completedCount = complaints.filter((c) => {
+        const s = (c.status || c.remarks || "").toLowerCase();
+        return s.includes("completed") || s.includes("done") || s.includes("resolved");
+    }).length;
     const pendingCount = totalComplaints - completedCount;
 
     const priorityCounts = complaints.reduce(
@@ -159,15 +160,18 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">🕐 Latest Complaints</h3>
                     <div className="flex flex-col gap-4">
-                        {sortedComplaints.slice(0, 4).map((c, index) => (
-                            <div key={`${c.complaintNo}-${index}`} className="flex items-start gap-3">
-                                <div className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${c.remarks?.toLowerCase().includes("completed") ? "bg-green-500" : "bg-orange-500"}`}></div>
-                                <div>
-                                    <p className="text-xs font-medium text-gray-700">{c.complaintNo} — {c.category}</p>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">{c.location} • {c.date}</p>
+                        {sortedComplaints.slice(0, 4).map((c, index) => {
+                            const isDone = (c.status || c.remarks || "").toLowerCase().includes("completed") || (c.status || c.remarks || "").toLowerCase().includes("done");
+                            return (
+                                <div key={`${c.complaintNo}-${index}`} className="flex items-start gap-3">
+                                    <div className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${isDone ? "bg-green-500" : "bg-orange-500"}`}></div>
+                                    <div>
+                                        <p className="text-xs font-medium text-gray-700">{c.complaintNo} — {c.category}</p>
+                                        <p className="text-[11px] text-gray-400 mt-0.5">{c.location} • {c.date}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>
@@ -192,7 +196,7 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
                                 <th className="bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
                                 <th className="bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Details</th>
                                 <th className="bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</th>
-                                <th className="bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Remarks</th>
+                                <th className="bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                                 <th className="bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide last:rounded-r-lg">Date</th>
                             </tr>
                         </thead>
@@ -207,7 +211,7 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
                                         <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-semibold ${priorityStyles[item.priority?.toLowerCase()] || "bg-gray-50 text-gray-600"}`}>{item.priority}</span>
                                     </td>
                                     <td className="px-4 py-3.5 border-b border-gray-100">
-                                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColor(item.remarks)}`}>{item.remarks || "Pending"}</span>
+                                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColor(item.status, item.remarks)}`}>{item.status || item.remarks || "Pending"}</span>
                                     </td>
                                     <td className="px-4 py-3.5 text-xs text-gray-400 border-b border-gray-100">{item.date}</td>
                                 </tr>
