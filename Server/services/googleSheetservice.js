@@ -24,6 +24,22 @@ const getNumericComplaintNumber = (value) => {
     return Number.isNaN(parsed) ? Number.NaN : parsed;
 };
 
+const safeLoadHeaderRow = async (sheet) => {
+    try {
+        await sheet.loadHeaderRow();
+    } catch (err) {
+        if (err.message && err.message.includes("Duplicate header detected")) {
+            console.error(
+                `\n❌ GOOGLE SHEET HEADER ERROR: ${err.message}\n` +
+                `👉 FIX: Open your Google Sheet ("Complaints" tab) and check Row 1 (Header row).\n` +
+                `   You currently have two columns named "Remarks".\n` +
+                `   Please delete or rename the extra duplicate "Remarks" column in Row 1 so all header names are unique.\n`
+            );
+        }
+        throw err;
+    }
+};
+
 const getComplaintNumberHeader = (sheet) => {
     const header = sheet.headerValues.find((value) =>
         ["complaint no", "complaint number"].includes(
@@ -73,7 +89,7 @@ const createComplaint = async (data) => {
     const doc = await connectGoogleSheet();
 
     const sheet = doc.sheetsByTitle["Complaints"];
-    await sheet.loadHeaderRow();
+    await safeLoadHeaderRow(sheet);
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
 
     // Auto-generate complaint number (max existing number + 1), ignoring corrupted spreadsheet values such as #REF!
@@ -87,20 +103,21 @@ const createComplaint = async (data) => {
     console.log("Auto-generated Complaint No:", complaintNo);
 
     const newRow = await sheet.addRow({
-        Date: data.date,
-        Location: data.location,
-        Category: data.category,
-        "Complained Person": data.complainedPerson,
-        "Complaint Details": data.complaintDetails,
-        "Time Note": data.timeNote,
-        "Time Done": data.timeDone,
-        Supervisor: data.supervisor,
-        Priority: data.priority,
-        Remarks: data.remarks,
-        "Attended By": data.attendedBy,
-        "Number of Workers": data.numberOfWorkers,
+        Date: data.date || "",
+        Location: data.location || "",
+        Category: data.category || "",
+        "Complained Person": data.complainedPerson || "",
+        "Complaint Details": data.complaintDetails || "",
+        "Time Note": data.timeNote || "",
+        "Time Done": data.timeDone || "",
+        Supervisor: data.supervisor || "",
+        Priority: data.priority || "",
+        Status: data.status || data.remarks || "",
+        Remarks: data.remarks || "",
+        "Attended By": data.attendedBy || "",
+        "Number of Workers": data.numberOfWorkers || "",
         "Completion Date": data.completionDate || "",
-        "Material Consumed": data.materialConsumed,
+        "Material Consumed": data.materialConsumed || "",
     });
 
     newRow.set(complaintNumberHeader, complaintNo);
@@ -114,7 +131,7 @@ const GetAllComplaint = async () => {
     const doc = await connectGoogleSheet();
 
     const sheet = doc.sheetsByTitle["Complaints"];
-    await sheet.loadHeaderRow();
+    await safeLoadHeaderRow(sheet);
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
 
     const rows = await sheet.getRows();
@@ -136,7 +153,8 @@ const GetAllComplaint = async () => {
                 completionDate: row.get("Completion Date"),
                 supervisor: row.get("Supervisor"),
                 priority: row.get("Priority"),
-                remarks: row.get("Remarks"),
+                status: row.get("Status") || row.get("Remarks") || "",
+                remarks: row.get("Remarks") || "",
                 materialConsumed: row.get("Material Consumed"),
             };
         })
@@ -153,7 +171,7 @@ const UpdateComplaint = async (complaintNo, data) => {
     const doc = await connectGoogleSheet();
 
     const sheet = doc.sheetsByTitle["Complaints"];
-    await sheet.loadHeaderRow();
+    await safeLoadHeaderRow(sheet);
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
 
     const rows = await sheet.getRows();
@@ -180,6 +198,7 @@ const UpdateComplaint = async (complaintNo, data) => {
         "Completion Date": ["completionDate", "Completion Date"],
         "Supervisor": ["supervisor", "Supervisor"],
         "Priority": ["priority", "Priority"],
+        "Status": ["status", "Status"],
         "Remarks": ["remarks", "Remarks"],
         "Material Consumed": ["materialConsumed", "Material Consumed"],
     };
@@ -205,7 +224,7 @@ const GetSpecificComplaint = async (complaintNo) => {
     const doc = await connectGoogleSheet();
 
     const sheet = doc.sheetsByTitle["Complaints"];
-    await sheet.loadHeaderRow();
+    await safeLoadHeaderRow(sheet);
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
 
     const rows = await sheet.getRows();
@@ -237,7 +256,7 @@ const DelComplaint = async (complaintNo) => {
     const doc = await connectGoogleSheet();
 
     const sheet = doc.sheetsByTitle["Complaints"];
-    await sheet.loadHeaderRow();
+    await safeLoadHeaderRow(sheet);
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
 
     const rows = await sheet.getRows();
@@ -268,7 +287,7 @@ const DelComplaint = async (complaintNo) => {
 const getNextComplaintNo = async () => {
     const doc = await connectGoogleSheet();
     const sheet = doc.sheetsByTitle["Complaints"];
-    await sheet.loadHeaderRow();
+    await safeLoadHeaderRow(sheet);
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
     const rows = await sheet.getRows();
     const existingNumbers = rows

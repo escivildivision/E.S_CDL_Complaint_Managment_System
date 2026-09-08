@@ -27,6 +27,7 @@ const emptyForm = {
     timeDone: "",
     supervisor: "",
     priority: "",
+    status: "",
     remarks: "",
     materialConsumed: "",
     attendedBy: "",
@@ -194,6 +195,7 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                                 <option value="Welder">Welder</option>
                                 <option value="Plumber">Plumber</option>
                                 <option value="Sewerman">Sewerman</option>
+                                <option value="Aluminium Fixer">Aluminium Fixer</option>
                                 <option value="Carpenter">Carpenter</option>
                                 <option value="Mason">Mason</option>
                                 <option value="Helper">Helper</option>
@@ -238,10 +240,10 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                         <textarea name="complaintDetails" value={form.complaintDetails} onChange={handleFormChange} required rows={3} placeholder="Describe the complaint..." className={`${inputClass} resize-none`} />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
                         <div>
                             <label className={labelClass}>Status</label>
-                            <select name="remarks" value={form.remarks} onChange={handleFormChange} className={inputClass}>
+                            <select name="status" value={form.status} onChange={handleFormChange} className={inputClass}>
                                 <option value="">Select Status</option>
                                 <option value="Completed">Completed</option>
                                 <option value="In-progress">In Progress</option>
@@ -251,6 +253,10 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                         <div>
                             <label className={labelClass}>Material Consumed</label>
                             <input type="text" name="materialConsumed" value={form.materialConsumed} onChange={handleFormChange} placeholder="e.g. 2 Paint Buckets" className={inputClass} />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Remarks</label>
+                            <input type="text" name="remarks" value={form.remarks} onChange={handleFormChange} placeholder="e.g. Additional comments or remarks" className={inputClass} />
                         </div>
                     </div>
 

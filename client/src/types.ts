@@ -9,6 +9,7 @@ export interface Complaint {
     timeDone: string;
     supervisor: string;
     priority: string;
+    status?: string;
     remarks: string;
     materialConsumed: string;
     attendedBy?: string;

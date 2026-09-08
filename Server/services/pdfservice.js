@@ -51,7 +51,7 @@ const generateComplaintPDF = (complaints) => {
             item.category || "",
             item.priority || "",
             item.supervisor || "",
-            item.remarks || "",
+            item.status || item.remarks || "",
         ]);
     });
 

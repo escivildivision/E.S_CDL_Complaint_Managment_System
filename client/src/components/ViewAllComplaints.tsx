@@ -20,11 +20,11 @@ const priorityStyles: Record<string, string> = {
     low: "bg-blue-50 text-blue-600",
 };
 
-const statusColor = (remarks: string) => {
-    const r = remarks?.toLowerCase() || "";
-    if (r.includes("completed") || r.includes("done") || r.includes("resolved"))
+const statusColor = (status?: string, remarks?: string) => {
+    const s = (status || remarks || "").toLowerCase();
+    if (s.includes("completed") || s.includes("done") || s.includes("resolved"))
         return "bg-green-50 text-green-700";
-    if (r.includes("progress") || r.includes("working"))
+    if (s.includes("progress") || s.includes("working"))
         return "bg-blue-50 text-blue-700";
     return "bg-orange-50 text-orange-700";
 };
@@ -111,7 +111,7 @@ export default function ViewAllComplaints({
         // Status Filter
         if (
             selectedStatus !== "All Statuses" &&
-            normalizeFilterValue(c.remarks) !== normalizeFilterValue(selectedStatus)
+            normalizeFilterValue(c.status || c.remarks) !== normalizeFilterValue(selectedStatus)
         ) {
             return false;
         }
@@ -367,7 +367,7 @@ export default function ViewAllComplaints({
                                         <span className={`inline-block px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${priorityStyles[item.priority?.toLowerCase()] || "bg-gray-50 text-gray-600"}`}>{item.priority}</span>
                                     </td>
                                     <td className="px-2 py-2 border-b border-gray-100">
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor(item.remarks)}`}>{item.remarks || "Pending"}</span>
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor(item.status, item.remarks)}`}>{item.status || item.remarks || "Pending"}</span>
                                     </td>
                                     <td className="px-2 py-2 text-[10px] text-gray-400 border-b border-gray-100 truncate">{item.date}</td>
                                     <td className="px-2 py-2 text-[10px] text-emerald-600 font-medium border-b border-gray-100 truncate">{item.completionDate || "-"}</td>
@@ -456,6 +456,11 @@ export default function ViewAllComplaints({
                                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{selectedComplaint.complaintDetails || "No details provided."}</p>
                             </div>
 
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider block mb-1">Remarks</span>
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{selectedComplaint.remarks || "No remarks added."}</p>
+                            </div>
+
                             <div className="grid grid-cols-4 gap-3">
                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                                     <span className="text-xs text-gray-400 font-medium block mb-1">Priority</span>
@@ -465,8 +470,8 @@ export default function ViewAllComplaints({
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                                     <span className="text-xs text-gray-400 font-medium block mb-1">Status</span>
-                                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColor(selectedComplaint.remarks)}`}>
-                                        {selectedComplaint.remarks || "Pending"}
+                                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColor(selectedComplaint.status, selectedComplaint.remarks)}`}>
+                                        {selectedComplaint.status || selectedComplaint.remarks || "Pending"}
                                     </span>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">

@@ -30,6 +30,7 @@ const emptyForm = {
     timeDone: "",
     supervisor: "",
     priority: "",
+    status: "",
     remarks: "",
     materialConsumed: "",
     attendedBy: "",
@@ -75,6 +76,7 @@ export default function UpdateComplaint({
                     timeDone: d["Time Done"] || d.timeDone || "",
                     supervisor: d["Supervisor"] || d.supervisor || "",
                     priority: d["Priority"] || d.priority || "",
+                    status: d["Status"] || d.status || d["Remarks"] || d.remarks || "",
                     remarks: d["Remarks"] || d.remarks || "",
                     materialConsumed: d["Material Consumed"] || d.materialConsumed || "",
                     attendedBy: d["Attended By"] || d.attendedBy || "",
@@ -114,12 +116,12 @@ export default function UpdateComplaint({
         const valLower = value.toLowerCase();
 
         if (
-            name === "remarks" &&
+            (name === "status" || name === "remarks") &&
             (valLower.includes("completed") || valLower.includes("done") || valLower.includes("resolved"))
         ) {
             setForm((prev) => ({
                 ...prev,
-                remarks: value,
+                [name]: value,
                 completionDate: prev.completionDate || new Date().toISOString().split("T")[0],
             }));
         } else {
@@ -317,12 +319,12 @@ export default function UpdateComplaint({
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-5">
                             <div>
-                                <label className={labelClass}>Status / Remarks</label>
+                                <label className={labelClass}>Status</label>
                                 <select
-                                    name="remarks"
-                                    value={form.remarks}
+                                    name="status"
+                                    value={form.status}
                                     onChange={handleFormChange}
                                     className={inputClass}
                                 >
@@ -331,6 +333,17 @@ export default function UpdateComplaint({
                                     <option value="In-progress">In Progress</option>
                                     <option value="Cancelled">Cancelled</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Remarks</label>
+                                <input
+                                    type="text"
+                                    name="remarks"
+                                    value={form.remarks}
+                                    onChange={handleFormChange}
+                                    placeholder="e.g. Additional remarks or status notes"
+                                    className={inputClass}
+                                />
                             </div>
                             <div>
                                 <label className={labelClass}>Completion Date</label>
