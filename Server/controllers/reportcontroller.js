@@ -5,12 +5,27 @@ const downloadComplaintReport = async (req, res) => {
     try {
         const complaints = await GetAllComplaint();
 
-        const { category, priority, status, dateFilter, startDate, endDate } = req.query;
+        const { search, category, priority, status, dateFilter, startDate, endDate } = req.query;
 
         const filteredComplaints = complaints.filter((c) => {
+            // Search filter (matches complaintNo, person, details, category, location, supervisor)
+            if (search && search.trim()) {
+                const q = search.trim().toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ");
+                const normalize = (v) => String(v ?? "").trim().toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ");
+                const matchesSearch =
+                    normalize(c.complaintNo).includes(q) ||
+                    normalize(c.complainedPerson).includes(q) ||
+                    normalize(c.complaintDetails).includes(q) ||
+                    normalize(c.category).includes(q) ||
+                    normalize(c.location).includes(q) ||
+                    normalize(c.supervisor).includes(q);
+                if (!matchesSearch) return false;
+            }
+
             if (category && category !== "All Categories" && c.category !== category) return false;
             if (priority && priority !== "All Priorities" && c.priority?.toLowerCase() !== priority.toLowerCase()) return false;
-            if (status && status !== "All Statuses" && c.remarks?.toLowerCase() !== status.toLowerCase()) return false;
+            // Use c.status (separate from c.remarks) to match the frontend status field
+            if (status && status !== "All Statuses" && (c.status || c.remarks)?.toLowerCase() !== status.toLowerCase()) return false;
 
             if (dateFilter && dateFilter !== "All" && c.date) {
                 const itemDate = new Date(c.date);
