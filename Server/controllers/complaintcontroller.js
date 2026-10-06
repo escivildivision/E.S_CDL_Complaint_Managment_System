@@ -90,7 +90,7 @@ const DeleteComplaint = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Complaint Deleted Successfully",
+            message: `Complaint ${req.params.complaintNo} deleted successfully`,
             data: complaint,
         });
     } catch (error) {

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Complaint } from "../types";
 import { toast } from "react-toastify";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const FILTER_STORAGE_KEY = "complaint-management-filters";
 
 interface ViewAllComplaintsProps {
     complaints: Complaint[];
@@ -48,16 +49,34 @@ export default function ViewAllComplaints({
     onUpdateComplaint,
     onRefresh,
 }: ViewAllComplaintsProps) {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [dateFilter, setDateFilter] = useState("All");
-    const [selectedCategory, setSelectedCategory] = useState("All Categories");
-    const [selectedPriority, setSelectedPriority] = useState("All Priorities");
-    const [selectedStatus, setSelectedStatus] = useState("All Statuses");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
+    const savedFilters = localStorage.getItem(FILTER_STORAGE_KEY);
+    const initialFilters = savedFilters ? JSON.parse(savedFilters) : {};
+
+    const [searchQuery, setSearchQuery] = useState(initialFilters.searchQuery || "");
+    const [dateFilter, setDateFilter] = useState(initialFilters.dateFilter || "All");
+    const [selectedCategory, setSelectedCategory] = useState(initialFilters.selectedCategory || "All Categories");
+    const [selectedPriority, setSelectedPriority] = useState(initialFilters.selectedPriority || "All Priorities");
+    const [selectedStatus, setSelectedStatus] = useState(initialFilters.selectedStatus || "All Statuses");
+    const [startDate, setStartDate] = useState(initialFilters.startDate || "");
+    const [endDate, setEndDate] = useState(initialFilters.endDate || "");
 
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
     const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem(
+            FILTER_STORAGE_KEY,
+            JSON.stringify({
+                searchQuery,
+                dateFilter,
+                selectedCategory,
+                selectedPriority,
+                selectedStatus,
+                startDate,
+                endDate,
+            })
+        );
+    }, [searchQuery, dateFilter, selectedCategory, selectedPriority, selectedStatus, startDate, endDate]);
 
     // Get unique categories and priorities dynamically from complaints data
     const categories = Array.from(new Set(complaints.map((c) => c.category).filter(Boolean)));
@@ -202,7 +221,12 @@ export default function ViewAllComplaints({
                 throw new Error("Failed to delete complaint");
             }
 
-            toast.success("Complaint deleted successfully");
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error("Complaint deletion was not confirmed");
+            }
+
+            toast.success(`Complaint ${complaintNo} deleted successfully`);
             onRefresh?.();
 
         } catch (error) {

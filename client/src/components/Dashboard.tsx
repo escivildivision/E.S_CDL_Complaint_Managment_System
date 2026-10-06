@@ -25,14 +25,17 @@ const statusColor = (status?: string, remarks?: string) => {
 
 export default function Dashboard({ complaints, onViewAll, onAddComplaint }: DashboardProps) {
     const sortedComplaints = [...complaints].sort((a, b) => {
-        const numberA = Number.parseInt(a.complaintNo || "", 10);
-        const numberB = Number.parseInt(b.complaintNo || "", 10);
+        const dateA = String(a.date || "").trim();
+        const dateB = String(b.date || "").trim();
+        const dateComparison = dateB.localeCompare(dateA);
 
-        if (!Number.isNaN(numberA) && !Number.isNaN(numberB)) {
-            return numberB - numberA;
+        if (dateComparison !== 0) {
+            return dateComparison;
         }
 
-        return String(b.complaintNo || "").localeCompare(String(a.complaintNo || ""));
+        const numberA = Number.parseInt(a.complaintNo || "0", 10);
+        const numberB = Number.parseInt(b.complaintNo || "0", 10);
+        return numberB - numberA;
     });
     const totalComplaints = complaints.length;
     const completedCount = complaints.filter((c) => {

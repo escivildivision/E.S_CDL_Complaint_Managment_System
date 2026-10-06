@@ -31,11 +31,18 @@ const getLogoBase64 = () => {
 const generateComplaintPDF = (complaints) => {
     const logoData = getLogoBase64();
 
+    // 1. SORT DATA IN ASCENDING ORDER BY COMPLAINT NO
+    // We use parseInt to ensure it sorts numerically (e.g., 2 comes before 10)
+    complaints.sort((a, b) => {
+        return parseInt(a.complaintNo || 0) - parseInt(b.complaintNo || 0);
+    });
+
     const tableBody = [
         [
             { text: "Complaint No", bold: true },
             { text: "Date", bold: true },
-            { text: "Type of Work/Location", bold: true },
+            { text: "Location", bold: true },
+            { text: "Details", bold: true }, // Details header
             { text: "Category", bold: true },
             { text: "Priority", bold: true },
             { text: "Shift Incharge", bold: true },
@@ -48,6 +55,7 @@ const generateComplaintPDF = (complaints) => {
             item.complaintNo || "",
             item.date || "",
             item.location || "",
+            item.complaintDetails || "", // Details data mapped here
             item.category || "",
             item.priority || "",
             item.supervisor || "",
@@ -89,7 +97,9 @@ const generateComplaintPDF = (complaints) => {
         {
             table: {
                 headerRows: 1,
-                widths: [65, 55, "*", 65, 50, 60, 55],
+                // 2. UPDATED WIDTHS: Now has exactly 8 items to match the 8 columns
+                // Using '*' for Details so it takes up the remaining available space
+                widths: [50, 50, 65, "*", 50, 40, 55, 45], 
                 body: tableBody,
             },
             layout: {
