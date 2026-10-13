@@ -94,7 +94,7 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
                     <div className="text-2xl w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">⏳</div>
                     <div className="flex flex-col">
                         <span className="text-3xl font-bold text-gray-900 leading-none tracking-tight">{pendingCount}</span>
-                        <span className="text-xs text-gray-500 font-medium mt-1">Pending</span>
+                        <span className="text-xs text-gray-500 font-medium mt-1">In-Progress</span>
                     </div>
                 </div>
                 <div className="bg-white rounded-2xl p-6 flex items-center gap-4 shadow-sm border border-gray-100">
@@ -127,7 +127,7 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
                             <span className="font-semibold text-green-600">{completedCount}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-500">
-                            <span>Pending</span>
+                            <span>In-Progress</span>
                             <span className="font-semibold text-orange-600">{pendingCount}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-500">
