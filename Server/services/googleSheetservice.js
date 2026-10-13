@@ -90,18 +90,128 @@ const createComplaint = async (data) => {
 
     const sheet = doc.sheetsByTitle["Complaints"];
     await safeLoadHeaderRow(sheet);
+
     const complaintNumberHeader = getComplaintNumberHeader(sheet);
 
-    // Auto-generate complaint number (max existing number + 1), ignoring corrupted spreadsheet values such as #REF!
     const rows = await sheet.getRows();
-    const existingNumbers = rows
-        .map((row) => getNumericComplaintNumber(row.get(complaintNumberHeader)))
-        .filter((n) => !Number.isNaN(n) && n < 10000);
 
-    const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
-    const complaintNo = String(maxNumber + 1);
-    console.log("Auto-generated Complaint No:", complaintNo);
+    // ---------------------------------------------
+    // Convert any date into YYYY-MM-DD
+    // ---------------------------------------------
+    const getDateOnly = (value) => {
+        if (!value) return null;
 
+        // If Google Sheets returns a Date object
+        if (value instanceof Date && !Number.isNaN(value.getTime())) {
+            const year = value.getFullYear();
+            const month = String(value.getMonth() + 1).padStart(2, "0");
+            const day = String(value.getDate()).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        }
+
+        const stringValue = String(value).trim();
+
+        // Already YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}/.test(stringValue)) {
+            return stringValue.substring(0, 10);
+        }
+
+        // MM/DD/YYYY
+        const match = stringValue.match(
+          /^(\d{1,2})\/(\d{1,2})\/(\d{4})/
+        );
+
+        if (match) {
+            const month = match[1].padStart(2, "0");
+            const day = match[2].padStart(2, "0");
+            const year = match[3];
+
+            return `${year}-${month}-${day}`;
+        }
+
+        return null;
+    };
+
+    // ---------------------------------------------
+    // New complaint date
+    // ---------------------------------------------
+    const newDate = getDateOnly(data.date);
+
+    if (!newDate) {
+        throw new Error("Invalid complaint date");
+    }
+
+    // ---------------------------------------------
+    // Get existing valid complaints
+    // ---------------------------------------------
+    const complaints = rows
+        .map((row) => {
+            const complaintNo = getNumericComplaintNumber(
+                row.get(complaintNumberHeader)
+            );
+
+            const date = getDateOnly(row.get("Date"));
+
+            return {
+                row,
+                complaintNo,
+                date,
+            };
+        })
+        .filter(
+            (item) =>
+                !Number.isNaN(item.complaintNo) &&
+                item.complaintNo < 10000 &&
+                item.date
+        );
+
+    // ---------------------------------------------
+    // Find correct complaint number
+    // ---------------------------------------------
+    let newComplaintNo;
+
+    if (complaints.length === 0) {
+        newComplaintNo = 1;
+    } else {
+
+        // Find complaints with date <= new complaint date
+        const complaintsBeforeOrSameDate = complaints.filter(
+            (item) => item.date <= newDate
+        );
+
+        if (complaintsBeforeOrSameDate.length === 0) {
+            newComplaintNo = 1;
+
+        } else {
+            const highestNumber = Math.max(
+                ...complaintsBeforeOrSameDate.map(
+                    (item) => item.complaintNo
+                )
+            );
+            newComplaintNo = highestNumber + 1;
+        }
+    }
+
+    // ---------------------------------------------
+    // Shift existing complaint numbers
+    for (const item of complaints) {
+
+        if (item.complaintNo >= newComplaintNo) {
+
+            const newNumber = item.complaintNo + 1;
+
+            item.row.set(
+                complaintNumberHeader,
+                String(newNumber)
+            );
+
+            await item.row.save();
+        }
+    }
+
+    // ---------------------------------------------
+    // Create new complaint
     const newRow = await sheet.addRow({
         Date: data.date || "",
         Location: data.location || "",
@@ -120,12 +230,19 @@ const createComplaint = async (data) => {
         "Material Consumed": data.materialConsumed || "",
     });
 
-    newRow.set(complaintNumberHeader, complaintNo);
+    // Assign automatically generated number
+    newRow.set(
+        complaintNumberHeader,
+        String(newComplaintNo)
+    );
+
     await newRow.save();
 
-    return { ...data, complaintNo };
+    return {
+        ...data,
+        complaintNo: String(newComplaintNo),
+    };
 };
-
 
 const GetAllComplaint = async () => {
     const doc = await connectGoogleSheet();
@@ -262,26 +379,51 @@ const DelComplaint = async (complaintNo) => {
     const rows = await sheet.getRows();
 
     const targetComplaintNo = sanitizeComplaintNumber(complaintNo, "");
-    const row = rows.find(
+
+    const targetNumber=Number(targetComplaintNo);
+
+
+    const targetIndex = rows.findIndex(
         (row) => sanitizeComplaintNumber(row.get(complaintNumberHeader), "") === targetComplaintNo
     );
 
-    if (!row) {
+
+    if (targetIndex === -1) {
         throw new Error("Complaint not found");
     }
 
-    const deletedData = row.toObject();
-    await row.delete();
+
+    const deletedData = rows[targetIndex].toObject();
+
+    await rows[targetIndex].delete();
+
 
     const remainingRows = await sheet.getRows();
-    for (let i = 0; i < remainingRows.length; i++) {
-        const nextComplaintNumber = String(i + 1);
-        const currentValue = sanitizeComplaintNumber(remainingRows[i].get(complaintNumberHeader), nextComplaintNumber);
-        remainingRows[i].set(complaintNumberHeader, currentValue || nextComplaintNumber);
-        await remainingRows[i].save();
+
+    if (remainingRows.length === 0) {
+        return deletedData;
+    }
+// Decrease numbers greater than deleted number
+    for (const remainingRow of remainingRows) {
+        const currentNumber = Number(
+            sanitizeComplaintNumber(
+                remainingRow.get(complaintNumberHeader),
+                ""
+            )
+        );
+
+        if (!Number.isNaN(currentNumber) && currentNumber > targetNumber) {
+            remainingRow.set(
+                complaintNumberHeader,
+                String(currentNumber - 1)
+            );
+
+            await remainingRow.save();
+        }
     }
 
     return deletedData;
+
 };
 
 const getNextComplaintNo = async () => {

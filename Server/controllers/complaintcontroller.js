@@ -88,7 +88,7 @@ const DeleteComplaint = async (req, res) => {
     try {
         const complaint = await DelComplaint(req.params.complaintNo);
 
-        res.status(200).json({
+       return res.status(200).json({
             success: true,
             message: `Complaint ${req.params.complaintNo} deleted successfully`,
             data: complaint,

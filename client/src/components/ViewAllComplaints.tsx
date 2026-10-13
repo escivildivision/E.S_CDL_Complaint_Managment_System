@@ -226,8 +226,13 @@ export default function ViewAllComplaints({
                 throw new Error("Complaint deletion was not confirmed");
             }
 
-            toast.success(`Complaint ${complaintNo} deleted successfully`);
-            onRefresh?.();
+          // Explicitly check for status 200
+            if (response.status === 200) {
+                toast.success(`Complaint ${complaintNo} deleted successfully`);
+                onRefresh?.();
+            } else {
+                toast.error("Failed to delete complaint. Please try again.");
+            }
 
         } catch (error) {
             toast.error("Failed to delete complaint");
