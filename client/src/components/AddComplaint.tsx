@@ -31,7 +31,7 @@ const emptyForm = {
     remarks: "",
     materialConsumed: "",
     attendedBy: "",
-    numberOfWorkers: 1,
+    workerNames: "",
 };
 
 export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintProps) {
@@ -204,14 +204,13 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
 
                         {/* Number of Workers (Count) */}
                         <div>
-                            <label className={labelClass}>Number of Workers</label>
+                            <label className={labelClass}>Assigned Workers</label>
                             <input
-                                type="number"
-                                name="numberOfWorkers"
-                                min="1"
-                                value={form.numberOfWorkers}
+                                type="text"
+                                name="workerNames"
+                                value={form.workerNames}
                                 onChange={handleFormChange}
-                                placeholder="e.g. 2"
+                                placeholder="Workers Name"
                                 className={inputClass}
                             />
                         </div>

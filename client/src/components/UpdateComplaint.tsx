@@ -34,7 +34,7 @@ const emptyForm = {
     remarks: "",
     materialConsumed: "",
     attendedBy: "",
-    numberOfWorkers: 1,
+    workerNames: "",
     completionDate: "",
 };
 
@@ -80,7 +80,7 @@ export default function UpdateComplaint({
                     remarks: d["Remarks"] || d.remarks || "",
                     materialConsumed: d["Material Consumed"] || d.materialConsumed || "",
                     attendedBy: d["Attended By"] || d.attendedBy || "",
-                    numberOfWorkers: d["Number of Workers"] || d.numberOfWorkers || 1,
+                    workerNames: d["Workers Assigned"] || d.workerNames || "",
                     completionDate: d["Completion Date"] || d.completionDate || "",
                 });
             }
@@ -265,6 +265,37 @@ export default function UpdateComplaint({
                                     className={inputClass}
                                 />
                             </div>
+                               {/* Complaint Attended By (Dropdown) */}
+                        <div>
+                            <label className={labelClass}>Complaint Attended By</label>
+                            <select
+                                name="attendedBy"
+                                value={form.attendedBy}
+                                onChange={handleFormChange}
+                                className={inputClass}
+                            >
+                                <option value="">Select Trade/Role</option>
+                                <option value="Painter">Painter</option>
+                                <option value="Welder">Welder</option>
+                                <option value="Plumber">Plumber</option>
+                                <option value="Sewerman">Sewerman</option>
+                                <option value="Aluminium Fixer">Aluminium Fixer</option>
+                                <option value="Carpenter">Carpenter</option>
+                                <option value="Mason">Mason</option>
+                                <option value="Helper">Helper</option>
+                            </select>
+                        </div>
+                           <div>
+                            <label className={labelClass}>Assigned Workers</label>
+                            <input
+                                type="text"
+                                name="workerNames"
+                                value={form.workerNames}
+                                onChange={handleFormChange}
+                                placeholder="Workers Name"
+                                className={inputClass}
+                            />
+                        </div>
                             <div>
                                 <label className={labelClass}>Time Note</label>
                                 <input

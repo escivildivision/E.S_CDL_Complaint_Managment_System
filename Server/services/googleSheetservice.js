@@ -225,7 +225,7 @@ const createComplaint = async (data) => {
         Status: data.status || data.remarks || "",
         Remarks: data.remarks || "",
         "Attended By": data.attendedBy || "",
-        "Number of Workers": data.numberOfWorkers || "",
+        "Workers Assigned": data.workerNames || "",
         "Completion Date": data.completionDate || "",
         "Material Consumed": data.materialConsumed || "",
     });
@@ -266,7 +266,7 @@ const GetAllComplaint = async () => {
                 timeNote: row.get("Time Note"),
                 timeDone: row.get("Time Done"),
                 attendedBy: row.get("Attended By"),
-                numberOfWorkers: row.get("Number of Workers"),
+               workerNames: row.get("Workers Assigned"),
                 completionDate: row.get("Completion Date"),
                 supervisor: row.get("Supervisor"),
                 priority: row.get("Priority"),
@@ -311,7 +311,7 @@ const UpdateComplaint = async (complaintNo, data) => {
         "Time Note": ["timeNote", "Time Note"],
         "Time Done": ["timeDone", "Time Done"],
         "Attended By": ["attendedBy", "Attended By"],
-        "Number of Workers": ["numberOfWorkers", "Number of Workers"],
+        "Workers Assigned": ["workerNames", "Workers Assigned"],
         "Completion Date": ["completionDate", "Completion Date"],
         "Supervisor": ["supervisor", "Supervisor"],
         "Priority": ["priority", "Priority"],
@@ -362,11 +362,12 @@ const GetSpecificComplaint = async (complaintNo) => {
         await row.save();
     }
 
-    return {
-        ...cleanedRow,
-        [complaintNumberHeader]: cleanComplaintNo,
-        complaintNo: cleanComplaintNo,
-    };
+        return {
+    ...cleanedRow,
+    [complaintNumberHeader]: cleanComplaintNo,
+    complaintNo: cleanComplaintNo,
+    workerNames: row.get("Workers Assigned") || "",
+};
 };
 
 const DelComplaint = async (complaintNo) => {

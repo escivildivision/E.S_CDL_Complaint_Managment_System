@@ -47,7 +47,7 @@ const generateComplaintPDF = (complaints) => {
                     {
                         stack: [
                             { text: "CIVIL AVIATION AUTHORITY", bold: true, fontSize: 12, decoration: "underline", alignment: "center" },
-                            { text: "CUSTOMER COMPLAINT / FEEDBACK LOG", bold: true, fontSize: 10, alignment: "center", margin: [0, 2, 0, 0] },
+                            { text: "CUSTOMER COMPLAINT / FEEDBACK LOG/ DAILY DEPLOYMENT", bold: true, fontSize: 10, alignment: "center", margin: [0, 2, 0, 0] },
                         ],
                         alignment: "center",
                         margin: [0, 6, 0, 4],
@@ -102,14 +102,18 @@ const generateComplaintPDF = (complaints) => {
             { text: "Complaint / Feedback Provider", rowSpan: 2, bold: true, alignment: "center" },
             { text: "Location", rowSpan: 2, bold: true, alignment: "center" },
             { text: "Brief Text of Complaint", rowSpan: 2, bold: true, alignment: "center" },
+            { text: "Assigned Workers", rowSpan: 2, bold: true, alignment: "center" },
             { text: "Category", rowSpan: 2, bold: true, alignment: "center" },
             { text: "Priority", rowSpan: 2, bold: true, alignment: "center" },
             { text: "Shift Incharge", rowSpan: 2, bold: true, alignment: "center" },
-            { text: "Complaint\nResolved", rowSpan: 2, bold: true, alignment: "center" },
+            { text: "Complain Status", rowSpan: 2, bold: true, alignment: "center" },
+            { text: "Remarks", rowSpan: 2, bold: true, alignment: "center" },
         ],
         [
             { text: "Ref. No.", bold: true, alignment: "center" },
             { text: "Date", bold: true, alignment: "center" },
+            {},
+            {},
             {},
             {},
             {},
@@ -128,10 +132,12 @@ const generateComplaintPDF = (complaints) => {
             item.complainedPerson || "",                                        // 3. Provider name
             item.location || "",                                                // 4. Location
             item.complaintDetails || "",                                        // 5. Details
-            item.category || "",                                                // 6. Category
-            item.priority || "",                                                // 7. Priority
-            item.supervisor || "",                                              // 8. Shift Incharge
-            item.status || item.remarks || "",                                  // 9. Status / Resolved
+            item.workerNames || "",                                             // 6. Assigned Workers
+            item.category || "",                                                // 7. Category
+            item.priority || "",                                                // 8. Priority
+            item.supervisor || "",                                              // 9. Shift Incharge
+            item.status || item.remarks || "",                                  // 10. Status / Resolved
+            item.remarks || "",                                                 // 11. Remarks
         ]);
     });
 
@@ -144,7 +150,7 @@ const generateComplaintPDF = (complaints) => {
     content.push({
         table: {
             headerRows: 2,
-            widths: [45, 45, 75, 55, "*", 45, 40, 55, 45],
+            widths: [40, 42, 65, 50, "*", 60, 38, 45, 55, 50, 50],
             body: tableBody,
         },
         layout: {
