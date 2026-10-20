@@ -48,6 +48,7 @@ export default function UpdateComplaint({
     const [priorities, setPriorities] = useState<PriorityItem[]>([]);
     const [loadingComplaint, setLoadingComplaint] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const isGD = form.status === "General Duty";
 
     useEffect(() => {
         fetchDropdowns();
@@ -133,12 +134,27 @@ export default function UpdateComplaint({
         e.preventDefault();
         setSubmitting(true);
         try {
+
+
+            const payload = isGD ? {
+                ...form,
+                location: "General Duty",
+                complainedPerson: "General Duty",
+                complaintDetails: "As Per Complain",
+                priority: "Normal",
+                timeDone: "",
+                materialConsumed: "",
+                supervisor: "",
+                remarks: "",
+                completionDate: "",
+            } : form;
+
             const res = await fetch(
                 `${API_URL}/complaints/update-complaint/${form.complaintNo || complaintNo}`,
                 {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(form),
+                    body: JSON.stringify(payload),
                 }
             );
             const json = await res.json();
@@ -265,37 +281,37 @@ export default function UpdateComplaint({
                                     className={inputClass}
                                 />
                             </div>
-                               {/* Complaint Attended By (Dropdown) */}
-                        <div>
-                            <label className={labelClass}>Complaint Attended By</label>
-                            <select
-                                name="attendedBy"
-                                value={form.attendedBy}
-                                onChange={handleFormChange}
-                                className={inputClass}
-                            >
-                                <option value="">Select Trade/Role</option>
-                                <option value="Painter">Painter</option>
-                                <option value="Welder">Welder</option>
-                                <option value="Plumber">Plumber</option>
-                                <option value="Sewerman">Sewerman</option>
-                                <option value="Aluminium Fixer">Aluminium Fixer</option>
-                                <option value="Carpenter">Carpenter</option>
-                                <option value="Mason">Mason</option>
-                                <option value="Helper">Helper</option>
-                            </select>
-                        </div>
-                           <div>
-                            <label className={labelClass}>Assigned Workers</label>
-                            <input
-                                type="text"
-                                name="workerNames"
-                                value={form.workerNames}
-                                onChange={handleFormChange}
-                                placeholder="Workers Name"
-                                className={inputClass}
-                            />
-                        </div>
+                            {/* Complaint Attended By (Dropdown) */}
+                            <div>
+                                <label className={labelClass}>Complaint Attended By</label>
+                                <select
+                                    name="attendedBy"
+                                    value={form.attendedBy}
+                                    onChange={handleFormChange}
+                                    className={inputClass}
+                                >
+                                    <option value="">Select Trade/Role</option>
+                                    <option value="Painter">Painter</option>
+                                    <option value="Welder">Welder</option>
+                                    <option value="Plumber">Plumber</option>
+                                    <option value="Sewerman">Sewerman</option>
+                                    <option value="Aluminium Fixer">Aluminium Fixer</option>
+                                    <option value="Carpenter">Carpenter</option>
+                                    <option value="Mason">Mason</option>
+                                    <option value="Helper">Helper</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Assigned Workers</label>
+                                <input
+                                    type="text"
+                                    name="workerNames"
+                                    value={form.workerNames}
+                                    onChange={handleFormChange}
+                                    placeholder="Workers Name"
+                                    className={inputClass}
+                                />
+                            </div>
                             <div>
                                 <label className={labelClass}>Time Note</label>
                                 <input
@@ -363,6 +379,7 @@ export default function UpdateComplaint({
                                     <option value="Completed">Completed</option>
                                     <option value="In-progress">In Progress</option>
                                     <option value="Cancelled">Cancelled</option>
+                                    <option value="General Duty">General Duty</option>
                                 </select>
                             </div>
                             <div>

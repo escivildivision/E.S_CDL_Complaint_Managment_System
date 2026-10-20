@@ -42,6 +42,8 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
     const [submitMsg, setSubmitMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [complaintNo, setComplaintNo] = useState<string>("...");
 
+    const isGD = form.status === "General Duty";
+
     useEffect(() => {
         fetchDropdowns();
         fetchNextComplaintNo();
@@ -89,10 +91,22 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
         setSubmitting(true);
         setSubmitMsg(null);
         try {
+
+            const payload = isGD ? {
+                ...form,
+                location: "General Duty",
+                complainedPerson: "General Duty",
+                complaintDetails: "As Per Complain",
+                priority: "Normal",
+                timeDone: "",
+                materialConsumed: "",
+                supervisor: "",
+                remarks: "",
+            } : form;
             const res = await fetch(`${API_URL}/complaints/add-complaint`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
+                body: JSON.stringify(payload),
             });
             const json = await res.json();
             if (json.success) {
@@ -156,14 +170,31 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                                 className={`${inputClass} bg-blue-50 text-blue-700 font-bold border-blue-300 cursor-not-allowed`}
                             />
                         </div>
+
                         <div>
                             <label className={labelClass}>Date *</label>
                             <input type="date" name="date" value={form.date} onChange={handleFormChange} required className={inputClass} />
                         </div>
+
+                        {/* Status moved to the top */}
                         <div>
-                            <label className={labelClass}>Type of Work/Location *</label>
-                            <input type="text" name="location" value={form.location} onChange={handleFormChange} required placeholder="e.g. Store Room" className={inputClass} />
+                            <label className={labelClass}>Status *</label>
+                            <select name="status" value={form.status} onChange={handleFormChange} required className={inputClass}>
+                                <option value="">Select Status</option>
+                                <option value="Completed">Completed</option>
+                                <option value="In-progress">In Progress</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="General Duty">General Duty</option>
+                            </select>
                         </div>
+
+                        {!isGD && (
+                            <div>
+                                <label className={labelClass}>Type of Work/Location *</label>
+                                <input type="text" name="location" value={form.location} onChange={handleFormChange} required placeholder="e.g. Store Room" className={inputClass} />
+                            </div>
+                        )}
+
                         <div>
                             <label className={labelClass}>Category *</label>
                             <select name="category" value={form.category} onChange={handleFormChange} required className={inputClass}>
@@ -173,23 +204,24 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                                 ))}
                             </select>
                         </div>
-                        <div>
-                            <label className={labelClass}>Complained Person *</label>
-                            <input type="text" name="complainedPerson" value={form.complainedPerson} onChange={handleFormChange} required placeholder="e.g. Ali" className={inputClass} />
-                        </div>
-                        <div>
-                            <label className={labelClass}>Supervisor</label>
-                            <input type="text" name="supervisor" value={form.supervisor} onChange={handleFormChange} placeholder="e.g. Ahmed" className={inputClass} />
-                        </div>
-                        {/* Complaint Attended By (Dropdown) */}
+
+                        {!isGD && (
+                            <div>
+                                <label className={labelClass}>Complained Person *</label>
+                                <input type="text" name="complainedPerson" value={form.complainedPerson} onChange={handleFormChange} required placeholder="e.g. Ali" className={inputClass} />
+                            </div>
+                        )}
+
+                        {!isGD && (
+                            <div>
+                                <label className={labelClass}>Supervisor</label>
+                                <input type="text" name="supervisor" value={form.supervisor} onChange={handleFormChange} placeholder="e.g. Ahmed" className={inputClass} />
+                            </div>
+                        )}
+
                         <div>
                             <label className={labelClass}>Complaint Attended By</label>
-                            <select
-                                name="attendedBy"
-                                value={form.attendedBy}
-                                onChange={handleFormChange}
-                                className={inputClass}
-                            >
+                            <select name="attendedBy" value={form.attendedBy} onChange={handleFormChange} className={inputClass}>
                                 <option value="">Select Trade/Role</option>
                                 <option value="Painter">Painter</option>
                                 <option value="Welder">Welder</option>
@@ -202,61 +234,55 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                             </select>
                         </div>
 
-                        {/* Number of Workers (Count) */}
                         <div>
                             <label className={labelClass}>Assigned Workers</label>
-                            <input
-                                type="text"
-                                name="workerNames"
-                                value={form.workerNames}
-                                onChange={handleFormChange}
-                                placeholder="Workers Name"
-                                className={inputClass}
-                            />
+                            <input type="text" name="workerNames" value={form.workerNames} onChange={handleFormChange} placeholder="Workers Name" className={inputClass} />
                         </div>
 
                         <div>
                             <label className={labelClass}>Time Note</label>
                             <input type="text" name="timeNote" value={form.timeNote} onChange={handleFormChange} placeholder="e.g. 9:00" className={inputClass} />
                         </div>
-                        <div>
-                            <label className={labelClass}>Time Done</label>
-                            <input type="text" name="timeDone" value={form.timeDone} onChange={handleFormChange} placeholder="e.g. 11:30" className={inputClass} />
-                        </div>
-                        <div>
-                            <label className={labelClass}>Priority *</label>
-                            <select name="priority" value={form.priority} onChange={handleFormChange} required className={inputClass}>
-                                <option value="">Select Priority</option>
-                                {priorities.map((pri) => (
-                                    <option key={pri.id} value={pri.priority}>{pri.priority}</option>
-                                ))}
-                            </select>
-                        </div>
+
+                        {!isGD && (
+                            <>
+                                <div>
+                                    <label className={labelClass}>Time Done</label>
+                                    <input type="text" name="timeDone" value={form.timeDone} onChange={handleFormChange} placeholder="e.g. 11:30" className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Priority *</label>
+                                    <select name="priority" value={form.priority} onChange={handleFormChange} required className={inputClass}>
+                                        <option value="">Select Priority</option>
+                                        {priorities.map((pri) => (
+                                            <option key={pri.id} value={pri.priority}>{pri.priority}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
                     </div>
 
-                    <div className="mt-5">
-                        <label className={labelClass}>Complaint Details *</label>
-                        <textarea name="complaintDetails" value={form.complaintDetails} onChange={handleFormChange} required rows={3} placeholder="Describe the complaint..." className={`${inputClass} resize-none`} />
-                    </div>
+                    {!isGD && (
+                        <div className="mt-5">
+                            <label className={labelClass}>Complaint Details *</label>
+                            <textarea name="complaintDetails" value={form.complaintDetails} onChange={handleFormChange} required rows={3} placeholder="Describe the complaint..." className={`${inputClass} resize-none`} />
+                        </div>
+                    )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
-                        <div>
-                            <label className={labelClass}>Status</label>
-                            <select name="status" value={form.status} onChange={handleFormChange} className={inputClass}>
-                                <option value="">Select Status</option>
-                                <option value="Completed">Completed</option>
-                                <option value="In-progress">In Progress</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className={labelClass}>Material Consumed</label>
-                            <input type="text" name="materialConsumed" value={form.materialConsumed} onChange={handleFormChange} placeholder="e.g. 2 Paint Buckets" className={inputClass} />
-                        </div>
-                        <div>
-                            <label className={labelClass}>Remarks</label>
-                            <input type="text" name="remarks" value={form.remarks} onChange={handleFormChange} placeholder="e.g. Additional comments or remarks" className={inputClass} />
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                        {!isGD && (
+                            <div>
+                                <label className={labelClass}>Material Consumed</label>
+                                <input type="text" name="materialConsumed" value={form.materialConsumed} onChange={handleFormChange} placeholder="e.g. 2 Paint Buckets" className={inputClass} />
+                            </div>
+                        )}
+                        {!isGD && (
+                            <div>
+                                <label className={labelClass}>Remarks</label>
+                                <input type="text" name="remarks" value={form.remarks} onChange={handleFormChange} placeholder="e.g. Additional comments or remarks" className={inputClass} />
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-8 flex gap-3">
@@ -265,7 +291,7 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                             disabled={submitting}
                             className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/35 hover:shadow-blue-500/50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {submitting ? "Submitting..." : "Submit Complaint"}
+                            {submitting ? "Adding..." : "Add Complaint"}
                         </button>
                         <button
                             type="button"

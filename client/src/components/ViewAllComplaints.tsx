@@ -23,6 +23,8 @@ const priorityStyles: Record<string, string> = {
 
 const statusColor = (status?: string, remarks?: string) => {
     const s = (status || remarks || "").toLowerCase();
+    if (s.includes("general duty"))
+        return "bg-purple-50 text-purple-700";
     if (s.includes("completed") || s.includes("done") || s.includes("resolved"))
         return "bg-green-50 text-green-700";
     if (s.includes("progress") || s.includes("working"))
@@ -63,6 +65,11 @@ export default function ViewAllComplaints({
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
     const [showModal, setShowModal] = useState(false);
 
+    // Delete popup states
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const [deletedMsg, setDeletedMsg] = useState<string | null>(null);
+
     useEffect(() => {
         localStorage.setItem(
             FILTER_STORAGE_KEY,
@@ -81,7 +88,7 @@ export default function ViewAllComplaints({
     // Get unique categories and priorities dynamically from complaints data
     const categories = Array.from(new Set(complaints.map((c) => c.category).filter(Boolean)));
     const priorities = Array.from(new Set(complaints.map((c) => c.priority).filter(Boolean)));
-    const statuses = ["Completed", "In-progress", "Cancelled"];
+    const statuses = ["Completed", "In-progress", "Cancelled", "General Duty"];
     const highestComplaintNo = complaints.reduce((highest, complaint) => {
         const number = Number.parseInt(complaint.complaintNo || "", 10);
         return Number.isNaN(number) ? highest : Math.max(highest, number);
@@ -192,53 +199,34 @@ export default function ViewAllComplaints({
         window.open(`${API_URL}/reports/download-complaints?${params.toString()}`, "_blank");
     };
 
-
     const handleViewComplaint = (item: Complaint) => {
         setSelectedComplaint(item);
         setShowModal(true);
     };
 
-
-    const handleDeleteComplaint = async (complaintNo: string) => {
-        // Show confirmation dialog
-        const confirmed = window.confirm(
-            `Are you sure you want to delete complaint ${complaintNo}?\n\nThis action cannot be undone.`
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
+    // Called when "Yes, Delete" is clicked in the popup
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
         try {
             const response = await fetch(
-                `${API_URL}/complaints/delete-complaint/${complaintNo}`,
-                {
-                    method: "DELETE",
-                }
+                `${API_URL}/complaints/delete-complaint/${deleteTarget}`,
+                { method: "DELETE" }
             );
-
-            if (!response.ok) {
-                throw new Error("Failed to delete complaint");
-            }
-
             const result = await response.json();
-            if (!result.success) {
-                throw new Error("Complaint deletion was not confirmed");
+            if (!response.ok || !result.success) {
+                throw new Error("Delete failed");
             }
-
-          // Explicitly check for status 200
-            if (response.status === 200) {
-                toast.success(`Complaint ${complaintNo} deleted successfully`);
-                onRefresh?.();
-            } else {
-                toast.error("Failed to delete complaint. Please try again.");
-            }
-
-        } catch (error) {
+            setDeletedMsg(`Complaint ${deleteTarget} deleted successfully`);
+            setTimeout(() => setDeletedMsg(null), 3000);
+            onRefresh?.();
+        } catch {
             toast.error("Failed to delete complaint");
+        } finally {
+            setDeleting(false);
+            setDeleteTarget(null);
         }
     };
-
 
     return (
         <>
@@ -414,7 +402,7 @@ export default function ViewAllComplaints({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDeleteComplaint(item.complaintNo)
+                                                    setDeleteTarget(item.complaintNo);
                                                 }}
                                                 className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md text-[10px] font-semibold cursor-pointer whitespace-nowrap"
                                             >
@@ -433,6 +421,7 @@ export default function ViewAllComplaints({
                     </div>
                 )}
             </div>
+
             {showModal && selectedComplaint && (
                 <div
                     className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
@@ -524,6 +513,49 @@ export default function ViewAllComplaints({
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Delete confirmation popup */}
+            {deleteTarget && (
+                <div
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                    onClick={() => !deleting && setDeleteTarget(null)}
+                >
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="text-4xl mb-3">🗑️</div>
+                        <h3 className="text-lg font-bold text-gray-900">Delete Complaint?</h3>
+                        <p className="text-sm text-gray-500 mt-2">
+                            Complaint <span className="font-semibold text-gray-800">{deleteTarget}</span> will be
+                            deleted permanently. This cannot be undone.
+                        </p>
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                disabled={deleting}
+                                className="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={deleting}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-50"
+                            >
+                                {deleting ? "Deleting..." : "Yes, Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Success popup */}
+            {deletedMsg && (
+                <div className="fixed top-5 right-5 z-50 bg-green-50 text-green-700 border border-green-200 px-5 py-3 rounded-xl text-sm font-medium shadow-lg">
+                    ✅ {deletedMsg}
                 </div>
             )}
         </>
