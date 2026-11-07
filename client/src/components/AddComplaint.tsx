@@ -96,7 +96,7 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                 ...form,
                 location: "General Duty",
                 complainedPerson: "General Duty",
-                complaintDetails: "As Per Complain",
+                complaintDetails: "As Per Complaint",
                 priority: "Normal",
                 timeDone: "",
                 materialConsumed: "",
