@@ -119,7 +119,7 @@ const createComplaint = async (data) => {
 
         // MM/DD/YYYY
         const match = stringValue.match(
-          /^(\d{1,2})\/(\d{1,2})\/(\d{4})/
+            /^(\d{1,2})\/(\d{1,2})\/(\d{4})/
         );
 
         if (match) {
@@ -194,20 +194,35 @@ const createComplaint = async (data) => {
     }
 
     // ---------------------------------------------
-    // Shift existing complaint numbers
-    for (const item of complaints) {
+    // Shift existing complaint numbers — one batch API call via loadCells
+    const rowsToShift = complaints.filter(
+        (item) => item.complaintNo >= newComplaintNo
+    );
 
-        if (item.complaintNo >= newComplaintNo) {
+    if (rowsToShift.length > 0) {
+        // Find the column index for the complaint number header (0-indexed)
+        const headerColIndex = sheet.headerValues.indexOf(complaintNumberHeader);
 
-            const newNumber = item.complaintNo + 1;
+        // Determine the row range we need to touch (rowNumber is 1-indexed spreadsheet row)
+        const minRow = Math.min(...rowsToShift.map((i) => i.row.rowNumber));
+        const maxRow = Math.max(...rowsToShift.map((i) => i.row.rowNumber));
 
-            item.row.set(
-                complaintNumberHeader,
-                String(newNumber)
-            );
+        // Load ONLY the complaint-number column for those rows — one read request
+        await sheet.loadCells({
+            startRowIndex: minRow - 1,   // 0-indexed
+            endRowIndex: maxRow,       // exclusive
+            startColumnIndex: headerColIndex,
+            endColumnIndex: headerColIndex + 1,
+        });
 
-            await item.row.save();
+        // Mutate cell values in memory
+        for (const item of rowsToShift) {
+            const cell = sheet.getCell(item.row.rowNumber - 1, headerColIndex);
+            cell.value = String(item.complaintNo + 1);
         }
+
+        // Flush all changes in ONE API call
+        await sheet.saveUpdatedCells();
     }
 
     // ---------------------------------------------
@@ -266,7 +281,7 @@ const GetAllComplaint = async () => {
                 timeNote: row.get("Time Note"),
                 timeDone: row.get("Time Done"),
                 attendedBy: row.get("Attended By"),
-               workerNames: row.get("Workers Assigned"),
+                workerNames: row.get("Workers Assigned"),
                 completionDate: row.get("Completion Date"),
                 supervisor: row.get("Supervisor"),
                 priority: row.get("Priority"),
@@ -362,12 +377,12 @@ const GetSpecificComplaint = async (complaintNo) => {
         await row.save();
     }
 
-        return {
-    ...cleanedRow,
-    [complaintNumberHeader]: cleanComplaintNo,
-    complaintNo: cleanComplaintNo,
-    workerNames: row.get("Workers Assigned") || "",
-};
+    return {
+        ...cleanedRow,
+        [complaintNumberHeader]: cleanComplaintNo,
+        complaintNo: cleanComplaintNo,
+        workerNames: row.get("Workers Assigned") || "",
+    };
 };
 
 const DelComplaint = async (complaintNo) => {
@@ -381,7 +396,7 @@ const DelComplaint = async (complaintNo) => {
 
     const targetComplaintNo = sanitizeComplaintNumber(complaintNo, "");
 
-    const targetNumber=Number(targetComplaintNo);
+    const targetNumber = Number(targetComplaintNo);
 
 
     const targetIndex = rows.findIndex(
@@ -404,23 +419,34 @@ const DelComplaint = async (complaintNo) => {
     if (remainingRows.length === 0) {
         return deletedData;
     }
-// Decrease numbers greater than deleted number
-    for (const remainingRow of remainingRows) {
-        const currentNumber = Number(
-            sanitizeComplaintNumber(
-                remainingRow.get(complaintNumberHeader),
-                ""
-            )
-        );
+    // Decrease numbers greater than deleted number — one batch API call via loadCells
+    const rowsToDecrement = remainingRows.filter((row) => {
+        const n = Number(sanitizeComplaintNumber(row.get(complaintNumberHeader), ""));
+        return !Number.isNaN(n) && n > targetNumber;
+    });
 
-        if (!Number.isNaN(currentNumber) && currentNumber > targetNumber) {
-            remainingRow.set(
-                complaintNumberHeader,
-                String(currentNumber - 1)
+    if (rowsToDecrement.length > 0) {
+        const headerColIndex = sheet.headerValues.indexOf(complaintNumberHeader);
+
+        const minRow = Math.min(...rowsToDecrement.map((r) => r.rowNumber));
+        const maxRow = Math.max(...rowsToDecrement.map((r) => r.rowNumber));
+
+        await sheet.loadCells({
+            startRowIndex: minRow - 1,
+            endRowIndex: maxRow,
+            startColumnIndex: headerColIndex,
+            endColumnIndex: headerColIndex + 1,
+        });
+
+        for (const row of rowsToDecrement) {
+            const currentNumber = Number(
+                sanitizeComplaintNumber(row.get(complaintNumberHeader), "")
             );
-
-            await remainingRow.save();
+            const cell = sheet.getCell(row.rowNumber - 1, headerColIndex);
+            cell.value = String(currentNumber - 1);
         }
+
+        await sheet.saveUpdatedCells();
     }
 
     return deletedData;

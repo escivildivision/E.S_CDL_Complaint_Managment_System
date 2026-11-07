@@ -37,14 +37,49 @@ export default function Dashboard({ complaints, onViewAll, onAddComplaint }: Das
         const numberB = Number.parseInt(b.complaintNo || "0", 10);
         return numberB - numberA;
     });
-    const totalComplaints = complaints.length;
+    const totalComplaints = complaints.filter((c) => {
+        const s = (c.status || c.remarks || "").toLowerCase();
+        return !s.includes("general") && !s.includes("duty");
+    }).length;
+
     const completedCount = complaints.filter((c) => {
         const s = (c.status || c.remarks || "").toLowerCase();
         return s.includes("completed") || s.includes("done") || s.includes("resolved");
     }).length;
-    const pendingCount = totalComplaints - completedCount;
+    const pendingCount = complaints.filter((c) => {
+        const s = (c.status || c.remarks || "").toLowerCase();
 
-    const priorityCounts = complaints.reduce(
+        // Skip if it's general duty or already completed
+        if (
+            s.includes("general") ||
+            s.includes("duty") ||
+            s.includes("completed") ||
+            s.includes("done") ||
+            s.includes("resolved") ||
+            s.includes("closed")
+        ) {
+            return false;
+        }
+
+        // Count only actual pending, in-progress, or active complaints
+        return (
+            s.includes("progress") ||
+            s.includes("working") ||
+            s.includes("pending") ||
+            s.includes("active") ||
+            s === "" // handles empty status as pending if desired
+        );
+    }).length;
+
+
+    // Filter out general duty complaints first so they aren't counted in priorities
+    const activeComplaints = complaints.filter((c) => {
+        const s = (c.status || c.remarks || "").toLowerCase();
+        return !s.includes("general") && !s.includes("duty");
+    });
+
+    // Then calculate priority counts using only activeComplaints
+    const priorityCounts = activeComplaints.reduce(
         (acc, c) => {
             const p = c.priority?.toLowerCase() || "normal";
             acc[p] = (acc[p] || 0) + 1;

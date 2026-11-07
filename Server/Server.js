@@ -21,7 +21,6 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/priorities", priorityRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/reports", reportRoutes);
-
 app.get("/", (req, res) => {
     res.status(200).json({
         success: true,
