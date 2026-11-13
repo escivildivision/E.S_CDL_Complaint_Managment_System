@@ -235,8 +235,8 @@ export default function AddComplaint({ onBack, onComplaintAdded }: AddComplaintP
                         </div>
 
                         <div>
-                            <label className={labelClass}>Assigned Workers</label>
-                            <input type="text" name="workerNames" value={form.workerNames} onChange={handleFormChange} placeholder="Workers Name" className={inputClass} />
+                            <label className={labelClass} >Assigned Workers *</label>
+                            <input required type="text" name="workerNames" value={form.workerNames} onChange={handleFormChange} placeholder="Workers Name" className={inputClass} />
                         </div>
 
                         <div>
