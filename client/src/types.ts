@@ -13,6 +13,6 @@ export interface Complaint {
     remarks: string;
     materialConsumed: string;
     attendedBy?: string;
-    numberOfWorkers?: number;
+    workerNames?: string;
     completionDate?: string;
 }

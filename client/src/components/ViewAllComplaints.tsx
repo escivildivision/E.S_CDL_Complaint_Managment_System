@@ -473,6 +473,10 @@ export default function ViewAllComplaints({
                                 <span className="text-xs font-medium text-gray-400 uppercase tracking-wider block mb-1">Complaint Details</span>
                                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{selectedComplaint.complaintDetails || "No details provided."}</p>
                             </div>
+                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider block mb-1">Assigned Worker</span>
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{selectedComplaint.workerNames || "Not assigned."}</p>
+                            </div>
 
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                                 <span className="text-xs font-medium text-gray-400 uppercase tracking-wider block mb-1">Remarks</span>
